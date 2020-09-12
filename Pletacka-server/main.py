@@ -3,6 +3,25 @@ import subprocess
 import mysql.connector
 import re
 import time
+import threading
+
+
+class MyUDPHandler(socketserver.BaseRequestHandler):
+
+    def handle(self):
+        sensor_number = str(self.request[0].strip())
+        sensor_number = int(re.search(r'\d+', sensor_number)[0])
+        from_ip = self.client_address[0]
+        # socket = self.request[1]
+        # print("{} wrote:".format(from_ip))
+        # print(sensor_number)
+        if sensor_number in onSensors.keys():
+            add_on_sensor(sensor_number)
+        else:
+            # not in keys
+            print("Add - {}".format(sensor_number))
+            add_on_sensor(sensor_number)
+        # print(onSensors)
 
 
 def get_ip():
@@ -24,7 +43,7 @@ def get_on_sensors():
         if status:
             all_status[sensor_number] = status[0][0]
             if status[0][0] != "OFF":
-                onSensors[sensor_number] = 5
+                onSensors[sensor_number] = 10
         else:
             all_status[sensor_number] = -1
 
@@ -32,29 +51,24 @@ def get_on_sensors():
 
 
 def add_on_sensor(number):
-    onSensors[number] = 5
-    db = pdb.cursor()
-    db.execute("SELECT * FROM sensors")
-    result = db.fetchall()
+    onSensors[number] = 10
 
 
-class MyUDPHandler(socketserver.BaseRequestHandler):
 
-    def handle(self):
-        sensor_number = str(self.request[0].strip())
-        sensor_number = int(re.search("[0-9][0-9]", sensor_number)[0])
-        from_ip = self.client_address[0]
-        # socket = self.request[1]
-        # print("{} wrote:".format(from_ip))
-        # print(sensor_number)
-        if sensor_number in onSensors.keys():
-            # in keys
-            print()
+def cutdown_old():
+    for sensor in onSensors:
+        if(onSensors[sensor]>2):
+            onSensors[sensor] = onSensors[sensor]-1
+        elif onSensors[sensor] == -1:
+            x=""
         else:
-            # not in keys
-            print("Add - {}".format(sensor_number))
-            add_on_sensor(sensor_number)
-        print(onSensors)
+            onSensors[sensor] = -1
+            print("Remove - {}".format(sensor))
+
+
+    print(onSensors)
+    cutdowner = threading.Timer(3, cutdown_old).start()
+
 
 
 if __name__ == "__main__":
@@ -68,13 +82,19 @@ if __name__ == "__main__":
         database="pletacka-ex"
     )
 
+
+
     all_status = {}
 
     onSensors = get_on_sensors()
 
-    print(onSensors)
+    cutdown_old()
 
-    time.sleep(2)
+
+
+
+    # cutdown_old()
+
 
     HOST, PORT = ip, 2727
     with socketserver.UDPServer((HOST, PORT), MyUDPHandler) as server:
