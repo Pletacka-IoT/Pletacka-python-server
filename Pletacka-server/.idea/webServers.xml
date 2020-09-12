@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="722b6b82-9ded-428d-96d3-cb1ebcc431a2" name="Pletacka-IoT">
+        <fileTransfer rootFolder="/home/pi/Pletacka-IoT/Pletacka-IoT" accessType="SFTP" host="pletacka.local" port="22" sshConfigId="7fe291c5-df4b-4ad8-b359-cdc5c648b7b5" sshConfig="pi@pletacka.local:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
