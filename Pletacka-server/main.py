@@ -17,16 +17,25 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
         # check that sensor is in on sensors
         if sensor_number in onSensors.keys():
+            if onSensors[sensor_number] == -1:
+                # print("\nAdd again")
+                sensor_add_state(sensor_number, "ON")
+                all_sensors_status[sensor_number] = "ON"
             reset_cutdown(sensor_number)
+
+
+
         else:
             # check that sensor is in database
             if sensor_number in all_sensors_status.keys():
                 # add sensor in on sensors
-                print("Add - {}".format(sensor_number))
+                # print("\nAdd")
+                sensor_add_state(sensor_number, "ON")
+                all_sensors_status[sensor_number] = "ON"
                 reset_cutdown(sensor_number)
             else:
                 # not existting sensor
-                print("ERROR - adding unexisting sensor -> {}".format(sensor_number))
+                print("\nERROR - adding unexisting sensor -> {}".format(sensor_number))
 
 
 def get_ip():
@@ -48,15 +57,16 @@ def get_on_sensors():
         if status:
             all_sensors_status[sensor_number] = status[0][0]
             if status[0][0] != "OFF":
-                onSensors[sensor_number] = 10
+                # print("\nRemove")
+                onSensors[sensor_number] = max_watchdog
         else:
             all_sensors_status[sensor_number] = -1
 
     return onSensors
 
 
-def reset_cutdown(number):
-    onSensors[number] = 10
+def reset_cutdown(sensor_number):
+    onSensors[sensor_number] = max_watchdog
 
 
 def cutdown_old():
@@ -66,11 +76,25 @@ def cutdown_old():
         elif onSensors[sensor] == -1:
             x = ""
         else:
+            # Turn off
             onSensors[sensor] = -1
-            print("Remove - {}".format(sensor))
+            sensor_add_state(sensor, "OFF")
+    # print(onSensors)
+    print("\r{}".format(onSensors), end="")
+    cutdowner = threading.Timer(speed_watchdog_s, cutdown_old).start()
 
-    print(onSensors)
-    cutdowner = threading.Timer(3, cutdown_old).start()
+
+# add
+def sensor_add_state(sensor_number, state):
+    if all_sensors_status[sensor_number] != state:
+        db = pdb.cursor()
+        sql = "INSERT INTO `A" + str(sensor_number) + "` (`state`) VALUE ('" + str(state) + "')"
+        db.execute(sql)
+        pdb.commit()
+        all_sensors_status[sensor_number] = state
+        print("\n   {} - {}".format(state.capitalize(), sensor_number))
+    else:
+        print("\nRemove -> Nothing to change - {}".format(sensor_number))
 
 
 if __name__ == "__main__":
@@ -84,6 +108,8 @@ if __name__ == "__main__":
         password="ladasmolik",
         database="pletacka-ex"
     )
+    max_watchdog = 6
+    speed_watchdog_s = 4
 
     all_sensors_status = {}
 
