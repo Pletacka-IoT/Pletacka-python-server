@@ -106,7 +106,7 @@ if __name__ == "__main__":
         host="localhost",
         user="pletacka",
         password="ladasmolik",
-        database="pletacka-ex"
+        database="pletacka-IoT"
     )
     max_watchdog = 6
     speed_watchdog_s = 4
