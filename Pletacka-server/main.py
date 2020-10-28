@@ -35,7 +35,11 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
                 reset_cutdown(sensor_number)
             else:
                 # not existting sensor
-                print("\nERROR - adding unexisting sensor -> {}".format(sensor_number))
+                print("\nERROR - adding unexisting sensor -> {} -> {}".format(sensor_number, get_tiime()))
+
+
+def get_tiime():
+    return time.strftime("%H:%M:%S", time.gmtime())
 
 
 def get_ip():
@@ -45,6 +49,7 @@ def get_ip():
 
 def get_on_sensors():
     onSensors = {}
+    pdb = mysql.connector.connect(**config)
     db = pdb.cursor()
     db.execute("SELECT * FROM sensors")
     all_sensors = db.fetchall()
@@ -62,6 +67,7 @@ def get_on_sensors():
         else:
             all_sensors_status[sensor_number] = -1
 
+    pdb.disconnect()
     return onSensors
 
 
@@ -80,21 +86,24 @@ def cutdown_old():
             onSensors[sensor] = -1
             sensor_add_state(sensor, "OFF")
     # print(onSensors)
-    print("\r{}".format(onSensors), end="")
+    print("\r{} -> {}".format(onSensors, get_tiime()), end="")
     cutdowner = threading.Timer(speed_watchdog_s, cutdown_old).start()
 
 
 # add
 def sensor_add_state(sensor_number, state):
     if all_sensors_status[sensor_number] != state:
+        pdb = mysql.connector.connect(**config)
         db = pdb.cursor()
         sql = "INSERT INTO `A" + str(sensor_number) + "` (`state`) VALUE ('" + str(state) + "')"
         db.execute(sql)
         pdb.commit()
         all_sensors_status[sensor_number] = state
-        print("\n   {} - {}".format(state.capitalize(), sensor_number))
+        print("\n   {} - {} -> {}".format(state.capitalize(), sensor_number, get_tiime()))
+        pdb.disconnect()
     else:
-        print("\nRemove -> Nothing to change - {}".format(sensor_number))
+        print(
+            "\nRemove -> Nothing to change - {} -> {}".format(sensor_number, get_tiime()))
 
 
 if __name__ == "__main__":
@@ -102,12 +111,24 @@ if __name__ == "__main__":
     print("Server IP:" + ip)
     print("Read from DB: ", end='')
 
-    pdb = mysql.connector.connect(
-        host="localhost",
-        user="pletacka",
-        password="ladasmolik",
-        database="pletacka-IoT"
-    )
+    config = {
+        'user': 'pletacka',
+        'password': 'ladasmolik',
+        'host': 'localhost',
+        'port': '3306',
+        'database': 'Pletacka-IoT',
+        'raise_on_warnings': True, }
+
+    # pdb = mysql.connector.connect(**config)
+
+
+
+    # pdb = mysql.connector.connect(
+    #     host="localhost",
+    #     user="pletacka",
+    #     password="ladasmolik",
+    #     database="Pletacka-IoT"
+    # )
     max_watchdog = 6
     speed_watchdog_s = 4
 
@@ -120,9 +141,3 @@ if __name__ == "__main__":
     HOST, PORT = ip, 2727
     with socketserver.UDPServer((HOST, PORT), MyUDPHandler) as server:
         server.serve_forever()
-
-# //To do
-# - kontrola existence senzoru
-# - odesilani do databaze
-# - autostartup malina
-# - prejmenovat databaze
