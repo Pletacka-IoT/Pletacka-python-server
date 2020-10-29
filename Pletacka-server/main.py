@@ -129,7 +129,7 @@ if __name__ == "__main__":
     #     password="ladasmolik",
     #     database="Pletacka-IoT"
     # )
-    max_watchdog = 6
+    max_watchdog = 8
     speed_watchdog_s = 4
 
     all_sensors_status = {}
