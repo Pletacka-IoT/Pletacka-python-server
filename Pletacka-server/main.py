@@ -25,17 +25,15 @@ class MyUDPHandler(socketserver.BaseRequestHandler):
 
 
 
+        elif sensor_number in all_sensors_status.keys():
+            # add sensor in on sensors
+            # print("\nAdd")
+            sensor_add_state(sensor_number, "ON")
+            all_sensors_status[sensor_number] = "ON"
+            reset_cutdown(sensor_number)
         else:
-            # check that sensor is in database
-            if sensor_number in all_sensors_status.keys():
-                # add sensor in on sensors
-                # print("\nAdd")
-                sensor_add_state(sensor_number, "ON")
-                all_sensors_status[sensor_number] = "ON"
-                reset_cutdown(sensor_number)
-            else:
-                # not existting sensor
-                print("\nERROR - adding unexisting sensor -> {} -> {}".format(sensor_number, get_tiime()))
+            # not existting sensor
+            print("\nERROR - adding unexisting sensor -> {} -> {}".format(sensor_number, get_tiime()))
 
 
 def get_tiime():
