@@ -130,3 +130,4 @@ dmypy.json
 
 
 git-updater.sh
+.DS_Store
